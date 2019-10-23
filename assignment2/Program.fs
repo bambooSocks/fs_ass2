@@ -56,14 +56,28 @@ let rec partCostAL pr = function
     | []             -> 0
     | (_, prts)::als -> partCostPS pr prts + partCostAL pr als
 
-let prodDurCost tr al = 0, 0
+let rec prodDurCost tr = function
+    | []         -> (0,0)
+    | (t,_)::als -> let (d1, c1) = prodDurCost tr als
+                    let (d2, c2) = Map.find t tr
+                    (d1+d2, c1+c2)
 
-let toStock al = Stock
+let toStock al =
+    List.foldBack (fun (_, ps) tail ->
+                   List.foldBack (fun (p, c) t ->
+                                  match Map.tryFind p t with
+                                  | None -> Map.add p c t
+                                  | Some (oc) -> Map.add p (c+oc) t
+                                 ) ps tail
+                  ) al Map.empty
+    
 
 // tests
 wellDefAL preg1 treg1 al1
 longestDuration (al1, treg1)
 partCostAL preg1 al1
+prodDurCost treg1 al1
+toStock al1
 
 [<EntryPoint>]
 let main argv =
