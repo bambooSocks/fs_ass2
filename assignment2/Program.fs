@@ -1,14 +1,14 @@
 ﻿// Learn more about F# at http://fsharp.org
 
 open System
-//type T = | A of T list
-//         | B of bool
-//         | C of T * T
-//         
-//let a = A []
-//let b = B true
-//let c = C (A [B false; B true], B true)
-//let d = C (A [B true; C (A [B true],B true);B false], A [B true; C (A [B true],B true);B false])
+type T = | A of T list
+         | B of bool
+         | C of T * T
+         
+let a = A []
+let b = B true
+let c = C (A [B false; B true], B true)
+let d = C (A [B true; C (A [B true],B true);B false], A [B true; C (A [B true],B true);B false])
 
 
 
@@ -32,15 +32,21 @@ let al1 = [ws1; ws2; ws3];;
 
 type Stock = Map<Part, int>
 
-let wellDefWS pr tr (tsk, prts) =
+let wellDefWS (pr:PartReg) (tr:TaskReg) (tsk, prts) =
     Map.exists (fun t _ -> t = tsk) tr &&
     List.forall (fun (p, _) -> Map.exists (fun prt _ -> prt = p) pr) prts &&
     List.forall (fun (_, c) -> c > 0) prts
 
 let wellDefAL (pr:PartReg) (tr:TaskReg) (al:AssemblyLine) =
-    List.forall (fun ws -> wellDefWS pr tr ws) al
+    List.forall (wellDefWS pr tr) al
     
-let longestDuration (al, treg) = 0
+let rec longestDuration (al, tr) =
+    match al with
+    | []         -> 0
+    | (t,_)::als -> match Map.tryFind t tr with
+                    | None -> longestDuration (als, tr)
+                    | Some (d, _) -> let temp = longestDuration (als, tr)
+                                     if d > temp then d else temp
     
     
 let partCostAL pr al = 0
@@ -48,6 +54,11 @@ let partCostAL pr al = 0
 let prodDurCost tr al = 0, 0
 
 let toStock al = Stock
+
+// tests
+wellDefAL preg1 treg1 al1
+longestDuration (al1, treg1)
+
 
 [<EntryPoint>]
 let main argv =
