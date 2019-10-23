@@ -48,8 +48,13 @@ let rec longestDuration (al, tr) =
                     | Some (d, _) -> let temp = longestDuration (als, tr)
                                      if d > temp then d else temp
     
-    
-let partCostAL pr al = 0
+let rec partCostPS pr = function
+    | []         -> 0
+    | (p, c)::ps -> c * (Map.find p pr) + partCostPS pr ps
+
+let rec partCostAL pr = function
+    | []             -> 0
+    | (_, prts)::als -> partCostPS pr prts + partCostAL pr als
 
 let prodDurCost tr al = 0, 0
 
@@ -58,7 +63,7 @@ let toStock al = Stock
 // tests
 wellDefAL preg1 treg1 al1
 longestDuration (al1, treg1)
-
+partCostAL preg1 al1
 
 [<EntryPoint>]
 let main argv =
