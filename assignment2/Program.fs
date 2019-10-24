@@ -1,16 +1,17 @@
-﻿// Learn more about F# at http://fsharp.org
+﻿// Second Assignemnt for course 02157 Functional programming
+// Mihaela-Elena Nistor - s183190, Matej Majtan - s184457
 
-open System
-type T = | A of T list
-         | B of bool
-         | C of T * T
-         
-let a = A []
-let b = B true
-let c = C (A [B false; B true], B true)
-let d = C (A [B true; C (A [B true],B true);B false], A [B true; C (A [B true],B true);B false])
-
-
+// Task 1.1
+//type T = | A of T list
+//         | B of bool
+//         | C of T * T
+//         
+//let a = A []
+//let b = B true
+//let c = C (A [B false; B true], B true)
+//let d = C (A [B true; C (A [B true],B true);B false], A [B true; C (A [B true],B true);B false])
+//
+//
 
 
 type Part = string
@@ -32,36 +33,41 @@ let al1 = [ws1; ws2; ws3];;
 
 type Stock = Map<Part, int>
 
+// Task 2.1
 let wellDefWS (pr:PartReg) (tr:TaskReg) (tsk, prts) =
     Map.exists (fun t _ -> t = tsk) tr &&
     List.forall (fun (p, _) -> Map.exists (fun prt _ -> prt = p) pr) prts &&
     List.forall (fun (_, c) -> c > 0) prts
 
+// Task 2.2
 let wellDefAL (pr:PartReg) (tr:TaskReg) (al:AssemblyLine) =
     List.forall (wellDefWS pr tr) al
-    
-let rec longestDuration (al, tr) =
-    match al with
-    | []         -> 0
-    | (t,_)::als -> match Map.tryFind t tr with
-                    | None -> longestDuration (als, tr)
-                    | Some (d, _) -> let temp = longestDuration (als, tr)
-                                     if d > temp then d else temp
-    
-let rec partCostPS pr = function
-    | []         -> 0
-    | (p, c)::ps -> c * (Map.find p pr) + partCostPS pr ps
 
-let rec partCostAL pr = function
-    | []             -> 0
-    | (_, prts)::als -> partCostPS pr prts + partCostAL pr als
+// Task 2.3
+let longestDuration (al, tr) =
+    List.foldBack (fun (t, _) als -> match Map.tryFind t tr with
+                                     | None -> als
+                                     | Some (d, _) -> List.max [d; als]
+                  ) al 0
 
-let rec prodDurCost tr = function
-    | []         -> (0,0)
-    | (t,_)::als -> let (d1, c1) = prodDurCost tr als
-                    let (d2, c2) = Map.find t tr
-                    (d1+d2, c1+c2)
+// Task 2.4
+let partCostAL pr al =
+    List.foldBack (fun (_, ps) als ->
+                  (List.foldBack (fun (p, c) pts ->
+                                  c * (Map.find p pr) + pts
+                                 ) ps 0) + als
+                  ) al 0
 
+
+
+// Task 2.5
+let prodDurCost tr al =
+    List.foldBack (fun (t, _) als -> let (d1, c1) = Map.find t tr
+                                     let (d2, c2) = als
+                                     (d1+d2, c1+c2)
+                  ) al (0,0)
+
+// Task 2.6
 let toStock al =
     List.foldBack (fun (_, ps) tail ->
                    List.foldBack (fun (p, c) t ->
@@ -72,14 +78,11 @@ let toStock al =
                   ) al Map.empty
     
 
-// tests
+// TESTS
+wellDefWS preg1 treg1 ws1
 wellDefAL preg1 treg1 al1
 longestDuration (al1, treg1)
 partCostAL preg1 al1
 prodDurCost treg1 al1
 toStock al1
 
-[<EntryPoint>]
-let main argv =
-    printfn "Hello World from F#!"
-    0 // return an integer exit code
